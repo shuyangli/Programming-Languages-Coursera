@@ -71,16 +71,16 @@ exception IllegalMove
 
 (* put your solutions for problem 2 here *)
 (* a. *)
-fun card_color (givenCard:card) =
-    case (#1 givenCard) of
+fun card_color (color, _) =
+    case color of
 	Clubs => Black
       | Diamonds => Red
       | Hearts => Red
       | Spades => Black
 
 (* b. *)
-fun card_value (givenCard:card) =
-    case (#2 givenCard) of
+fun card_value (_, value) =
+    case value of
 	Num x => x
       | Jack => 10
       | Queen => 10
