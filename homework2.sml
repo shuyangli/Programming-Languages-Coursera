@@ -43,17 +43,17 @@ fun get_substitutions2 (substitution, str) =
 
 (* d. *)
 (* name of record: {first:string, middle:string, last:string} *)
-fun similar_names (substitutions, fullName:{first:string, middle:string, last:string}) =
+fun similar_names (substitutions, {first = firstname, middle = middlename, last = lastname}) =
     let
-	val subFirstNames = get_substitutions2 (substitutions, (#first fullName))
+	val subFirstNames = get_substitutions2 (substitutions, firstname)
     in
 	let
 	    fun substituteNames (subFirstNameList, allNamesList) =
 		case subFirstNameList of
 		    [] => allNamesList
-		  | x :: x' => substituteNames (x', {first = x, middle = #middle fullName, last = #last fullName} :: allNamesList)
+		  | x :: x' => substituteNames (x', {first = x, middle = middlename, last = lastname} :: allNamesList)
 	in
-	    substituteNames (subFirstNames, [fullName])
+	    substituteNames (subFirstNames, [{first = firstname, middle = middlename, last = lastname}])
 	end
     end
 
