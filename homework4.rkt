@@ -67,16 +67,14 @@
 
 ; 10.
 (define (cached-assoc xs n)
-  (lambda (v)
-    (let ([cache (make-vector n #f)]
-          [index 0])
+  (letrec ([cache (make-vector n #f)]
+           [index 0])
+    (lambda (v)
       (if (vector-assoc v cache)
           (vector-assoc v cache)
           (let ([cur-val (assoc v xs)])
             (begin
               (vector-set! cache index cur-val)
               (set! index
-                    (if (> index (- n 1))
-                        0
-                        (+ index 1)))
+                    (remainder (+ index 1) n))
               (vector-assoc v cache)))))))
