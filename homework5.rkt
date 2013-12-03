@@ -61,8 +61,6 @@
         ; primitive values
         [(int? e)
          e]
-        [(apair? e)
-         e]
         [(aunit? e)
          e]
         [(closure? e)
@@ -86,19 +84,20 @@
         ; call
         ; this is trickier so I'm making some comments
         [(call? e)
-         (if (closure? (call-funexp e)) ; if it's not calling a closure, it's an error
-             (let ([locenv (closure-env (call-funexp e))]
-                   [funexp (closure-fun (call-funexp e))]
-                   [param (eval-under-env (call-actual e) env)])
-               (eval-under-env (fun-body funexp) ; evaluate the body of the function
-                               (if (fun-nameopt funexp)
-                                   (cons (cons (fun-nameopt funexp) (call-funexp e)) ; with its name bound to the whole closure
-                                         (cons (cons (fun-formal funexp) param) locenv)) ; and argument bound to the parameter
-                                   (cons (cons (fun-formal funexp) param) locenv))))
-             (error "MUPL call applied to non-closure"))]
+         (let ([curclosure (eval-under-env (call-funexp e) env)]) ; first evaluate the closure
+           (if (closure? curclosure) ; if it's not calling a closure, it's an error
+               (let ([locenv (closure-env curclosure)]
+                     [funexp (closure-fun curclosure)]
+                     [param (eval-under-env (call-actual e) env)])
+                 (eval-under-env
+                  (fun-body funexp) ; if it's okay, it evaluates the body of the function
+                  (if (fun-nameopt funexp)
+                      (cons (cons (fun-nameopt funexp) curclosure) ; with its name bound to the whole closure
+                            (cons (cons (fun-formal funexp) param) locenv)) ; and argument bound to the parameter
+                      (cons (cons (fun-formal funexp) param) locenv))))
+               (error "MUPL call applied to non-closure")))]
         ; apair
         [(apair? e)
-         (print "eval a pair")
          (apair (eval-under-env (apair-e1 e) env)
                 (eval-under-env (apair-e2 e) env))]
         ; fst and snd
@@ -106,15 +105,16 @@
          (let ([result (eval-under-env (fst-e e) env)])
            (if (apair? result)
                (apair-e1 result)
-               (error "MUPL fst applied to non-pair")))]
+               (error "MUPL fst applied to non-apair")))]
         [(snd? e)
          (let ([result (eval-under-env (snd-e e) env)])
            (if (apair? result)
                (apair-e2 result)
-               (error "MUPL snd applied to non-pair")))]
+               (error "MUPL snd applied to non-apair")))]
         ; isaunit
         [(isaunit? e)
-         (if (aunit? (isaunit-e e)) (int 1) (int 0))]
+         (if (aunit? (eval-under-env (isaunit-e e) env)) (int 1) (int 0))]
+        ; default
         [#t (error (format "bad MUPL expression: ~v" e))]))
 
 ;; Do NOT change
@@ -139,17 +139,20 @@
 
 ;; Problem 4
 
-;(define mupl-map
-;  (fun "mupl-map" "function"
-;       (fun "f" "mupllst"
-;            (ifaunit (var "mupllst")
-;                     (aunit)
-;                     (apair (call (var "f") (fst (var "mupllst")))
-;                            (call (var "mupl-map") (snd (var "mupllst"))))))))
+(define mupl-map
+  (fun #f "function"
+       (fun "mapfunc" "mupllst"
+            (ifaunit (var "mupllst")
+                     (aunit)
+                     (apair (call (var "function") (fst (var "mupllst")))
+                            (call (var "mapfunc") (snd (var "mupllst"))))))))
 
 (define mupl-mapAddN 
   (mlet "map" mupl-map
-        "CHANGE (notice map is now in MUPL scope)"))
+        (fun #f "increment"
+             (call (var "map")
+                   (fun #f "curnum" (add (var "increment")
+                                         (var "curnum")))))))
 
 ;; Challenge Problem
 
