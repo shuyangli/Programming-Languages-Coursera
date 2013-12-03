@@ -129,13 +129,13 @@
 (define (mlet* lstlst e2)
   (if (null? lstlst)
       e2
-      (mlet (car (car lstlst)) (cdr (car lstlst)) (mlet* (cdr lstlst) e2))))
-  
+      (mlet (car (car lstlst)) (cdr (car lstlst))
+            (mlet* (cdr lstlst) e2))))
 
 (define (ifeq e1 e2 e3 e4)
-  (let ([_x (eval-exp e1)]
-        [_y (eval-exp e2)])
-    (ifgreater _x _y e4 (ifgreater _y _x e4 e3))))
+  (mlet* (list (cons "_x" e1) (cons "_y" e2))
+         (ifgreater (var "_x") (var "_y") e4
+                    (ifgreater (var "_y") (var "_x") e4 e3))))
 
 ;; Problem 4
 
